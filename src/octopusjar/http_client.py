@@ -342,7 +342,8 @@ class HttpClient:
         if self._closed:
             raise HttpClientError("HTTP client is closed.")
 
-        current_url = self._validate_destination(url or self._target)
+        candidate_url = urljoin(self._target, url) if url else self._target
+        current_url = self._validate_destination(candidate_url)
         method = method.upper().strip()
         if not method or any(char.isspace() for char in method):
             raise ValueError("Invalid HTTP method.")
