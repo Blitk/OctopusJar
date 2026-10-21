@@ -1,0 +1,54 @@
+
+{
+  "tool": "OctopusJar",
+  "version": "0.1.0",
+  "demo": true,
+  "demo_description": "Exemplo ilustrativo baseado em um servidor HTTP de laboratório local.",
+  "started_at": "2026-10-21T10:00:00-03:00",
+  "finished_at": "2026-10-21T10:00:02-03:00",
+  "duration_seconds": 2.0,
+  "target": "http://127.0.0.1:8000/",
+  "scope": [
+    "http://127.0.0.1:8000/",
+    "http://127.0.0.1:8000/health"
+  ],
+  "checks_performed": 10,
+  "findings_count": 1,
+  "findings_by_severity": {
+    "CRITICAL": 0,
+    "HIGH": 0,
+    "MEDIUM": 0,
+    "LOW": 1,
+    "INFO": 0,
+    "UNKNOWN": 0
+  },
+  "findings": [
+    {
+      "rule_id": "information-disclosure.server-header",
+      "name": "Server header disclosed",
+      "description": "O servidor de laboratório informa sua identificação no cabeçalho HTTP Server.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "endpoint": "http://127.0.0.1:8000/",
+      "evidence": {
+        "header": "Server",
+        "value": "LabServer/1.0"
+      },
+      "recommendation": "Remova ou minimize cabeçalhos que revelem detalhes desnecessários da tecnologia do servidor.",
+      "limitations": [
+        "A divulgação do cabeçalho, isoladamente, não demonstra uma vulnerabilidade explorável."
+      ]
+    }
+  ],
+  "errors": [],
+  "limitations": [
+    "Demonstração com servidor HTTP local controlado.",
+    "Os resultados não representam uma auditoria de produção."
+  ],
+  "reproduction": {
+    "method": "Verificações HTTP não destrutivas",
+    "request_body_recorded": false,
+    "response_bodies_included": false,
+    "suggested_lab": "Inicie o servidor de testes local e execute o OctopusJar com autorização explícita para o alvo."
+  }
+}
