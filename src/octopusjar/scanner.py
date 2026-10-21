@@ -40,6 +40,7 @@ class ScanReport:
             "started_at": self.started_at,
             "finished_at": self.finished_at,
             "endpoints_scanned": self.endpoints_scanned,
+            "checks_performed": self.checks_performed,
             "findings": [item.to_dict() for item in self.findings],
             "errors": [item.to_dict() for item in self.errors],
             "summary": {
@@ -89,10 +90,12 @@ class Scanner:
         seen: set[tuple[str, str, str]] = set()
 
         try:
+            checks_performed = 0
             for endpoint in targets:
                 safe_url = safe_endpoint(endpoint)
 
                 for check in self.checks:
+                    checks_performed += 1
                     try:
                         results = check.run(self.client, endpoint)
 
