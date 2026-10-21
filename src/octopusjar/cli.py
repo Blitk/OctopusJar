@@ -1,4 +1,3 @@
-
 """OctopusJar command-line interface."""
 
 from __future__ import annotations
@@ -13,6 +12,7 @@ import typer
 
 from octopusjar.http_client import HttpClient, HttpClientError
 from octopusjar.reporting import render_html, render_json
+from octopusjar.reporting import ReportWriteError, write_report
 from octopusjar.scanner import Scanner
 
 app = typer.Typer(
@@ -224,22 +224,19 @@ def scan(
         )
         raise typer.Exit(code=EXIT_OPERATIONAL)
 
-    if format_ == "json":
-        rendered = render_json(report)
-    elif format_ == "html":
-        rendered = render_html(report)
-    else:
-        rendered = ""
-
+    # Gravar relatório se output foi configurado
     if output is not None:
         try:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(rendered, encoding="utf-8")
-        except OSError:
-            typer.echo("Não foi possível gravar o relatório.", err=True)
+            write_report(report, output, format_)
+        except ReportWriteError as exc:
+            typer.echo(str(exc), err=True)
             raise typer.Exit(code=EXIT_OPERATIONAL)
-
+    # Ou renderizar para stdout se formato estruturado
     elif format_ in {"json", "html"}:
+        if format_ == "json":
+            rendered = render_json(report)
+        else:
+            rendered = render_html(report)
         typer.echo(rendered, nl=False)
 
     if not structured_stdout:
