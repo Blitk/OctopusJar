@@ -1,4 +1,3 @@
-
 # OctopusJar
 
 A cautious, open-source CLI foundation for security checks against REST APIs you are authorized to assess.
@@ -26,18 +25,46 @@ This initial foundation implements strict URL scope validation against an explic
 * **Package Manager**: `pip` (with `venv` support for isolation).
 
 ### Development Tooling
+* `pytest`: Automated test suite runner.
+* `ruff`: Fast Python linter and code style checker.
 
-```bash
-
-octopusjar scan --target https://exemplo.com --output demo-report.json
-
-or
-
-python -m octopusjar.cli scan --target https://exemplo.com
-
-```
 ---
 ## Examples
+
+```python
+from octopusjar.scanner import Scanner
+from octopusjar.scope import Scope
+from octopusjar.reporting import Reporting
+
+def executar_auditoria():
+    # Define o alvo e inicializa o escopo de segurança
+    alvo = "https://exemplo.com"
+    escopo = Scope(allowed_targets=[alvo])
+
+    # Inicializa o scanner passando o escopo configurado
+    scanner = Scanner(scope=escopo)
+
+    print(f"Iniciando varredura de segurança em: {alvo}")
+    resultados = scanner.run()
+
+    # Processa e exporta os resultados para o formato de relatório
+    relatorio = Reporting(resultados)
+    relatorio.save_to_json("demo-report.json")
+    
+    print("Varredura finalizada. Relatório salvo com sucesso!")
+
+if __name__ == "__main__":
+    executar_auditoria()
+```
+Or CLI:
+
+```bash
+# Executa uma varredura básica em um alvo específico gerando um relatório em JSON
+octopusjar scan --target https://exemplo.com --output demo-report.json
+
+# Execução alternativa chamando o pacote diretamente pelo Python
+python -m octopusjar.cli scan --target https://exemplo.com
+```
 
 ---
 
@@ -58,20 +85,3 @@ pytest
 
 # Run the code linter
 ruff check .
-
-Scope Policy & Architecture
-Allowlist entries operate strictly on origins. Examples of valid entries include:
- * https://api.example.test
- * http://127.0.0.1:8000
-Core Policy Rules:
- * Explicit Match: A target is permitted only when its normalized scheme, hostname, and effective port match an explicit entry.
- * Subdomain Restriction: Subdomains are not implicitly included.
- * Strict Rejection: URL credentials, malformed URLs, unsupported schemes, and URLs without a hostname are automatically rejected.
- * Defense-in-Depth: The allowlist serves as a policy check rather than a complete network security boundary. Future expansions require validation on each redirect hop and resolved destination to mitigate DNS rebinding and internal network exposure.
-Risks, Disclaimer & Responsible Use
-Legal & Ethical Disclaimer
-OctopusJar is designed exclusively for authorized security testing and research. Executing scans against targets without prior explicit written permission from the asset owner is illegal and violates terms of service.
-Semantic Versioning & Roadmap
-OctopusJar follows Semantic Versioning 2.0.0:
- * v0.1.0 (Current Foundation): Focuses on robust architecture setup, testing pipelines, code quality checks via Ruff, and explicit allowlist scope validation policies.
-
