@@ -26,8 +26,18 @@ This initial foundation implements strict URL scope validation against an explic
 * **Package Manager**: `pip` (with `venv` support for isolation).
 
 ### Development Tooling
-* `pytest`: Automated test suite runner.
-* `ruff`: Fast Python linter and code style checker.
+
+```bash
+
+octopusjar scan --target https://exemplo.com --output demo-report.json
+
+or
+
+python -m octopusjar.cli scan --target https://exemplo.com
+
+```
+---
+## Examples
 
 ---
 
