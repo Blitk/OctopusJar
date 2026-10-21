@@ -61,6 +61,8 @@ class RedirectLimitError(HttpClientError):
 class RateLimitConfigurationError(ValueError):
     """The configured request rate is invalid."""
 
+class RequestLimitExceeded(HttpClientError):
+    """The configured request budget has been exhausted."""
 
 @dataclass(frozen=True, slots=True)
 class HttpResult:
@@ -178,7 +180,12 @@ class HttpClient:
         if not verify_tls:
             # Keep TLS verification mandatory in this client implementation.
             raise ValueError("TLS verification cannot be disabled.")
+        if max_requests < 1:
+            raise ValueError("max_requests must be at least 1.")
 
+        self._max_requests = max_requests
+        self._request_count = 0
+        self._budget_lock = threading.Lock()
         self._target = self._validate_url(target)
         self._target_parts = urlsplit(self._target)
         self._target_host = _canonical_host(self._target_parts.hostname or "")
@@ -353,6 +360,7 @@ class HttpClient:
 
         for redirect_number in range(self._max_redirects + 1):
             self._wait_for_rate_limit()
+            self._consume_request_budget()
 
             try:
                 with self._client.stream(
@@ -429,6 +437,15 @@ class HttpClient:
 
         raise RedirectLimitError("Maximum redirect count exceeded.")
 
+    def _consume_request_budget(self) -> None:
+        """Atomically reserve one outbound HTTP request."""
+            with self._budget_lock:
+                if self._request_count >= self._max_requests:
+                    raise RequestLimitExceeded(
+                        "Configured HTTP request budget exhausted."
+                     )
+                self._request_count += 1
+    
     def get(
         self,
         url: str | None = None,
