@@ -159,6 +159,7 @@ class HttpClient:
         read_timeout: float = 10.0,
         write_timeout: float = 10.0,
         pool_timeout: float = 5.0,
+        max_requests: int = 1000,
         max_response_bytes: int = 2_000_000,
         max_redirects: int = 3,
         requests_per_second: float = 2.0,
@@ -197,7 +198,7 @@ class HttpClient:
 
         if allowed_hosts:
             self._allowlist = {_host_and_port(entry) for entry in allowed_hosts}
-
+        self._validate_destination(self._target)
         self._max_response_bytes = max_response_bytes
         self._max_redirects = max_redirects
         self._interval = 1.0 / requests_per_second
@@ -439,12 +440,12 @@ class HttpClient:
 
     def _consume_request_budget(self) -> None:
         """Atomically reserve one outbound HTTP request."""
-            with self._budget_lock:
-                if self._request_count >= self._max_requests:
-                    raise RequestLimitExceeded(
-                        "Configured HTTP request budget exhausted."
-                     )
-                self._request_count += 1
+        with self._budget_lock:
+            if self._request_count >= self._max_requests:
+                raise RequestLimitExceeded(
+                    "Configured HTTP request budget exhausted."
+                 )
+            self._request_count += 1
     
     def get(
         self,

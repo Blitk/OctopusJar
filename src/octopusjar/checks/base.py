@@ -81,10 +81,13 @@ SECRET_KEY = re.compile(
     r"(authorization|cookie|set-cookie|token|secret|password|api[-_]?key)",
     re.IGNORECASE,
 )
+
 SECRET_VALUE = re.compile(
-    r"(?i)\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]+"
-    r"|(?i)(token|secret|password|api[_-]?key)=([^&\s]+)"
+    r"\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]+"
+    r"|(token|secret|password|api[_-]?key)=([^&\s]+)",
+    re.IGNORECASE,
 )
+
 
 
 def sanitize_text(value: str, limit: int = 240) -> str:

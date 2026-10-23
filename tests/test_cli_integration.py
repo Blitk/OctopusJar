@@ -119,6 +119,7 @@ def test_json_output_file(runner, lab_server, tmp_path: Path):
 
     result = runner.invoke(app, args)
 
+
     # Código 1 significa que foram encontrados achados.
     assert result.exit_code in (0, 1), result.output
     assert output_file.exists()

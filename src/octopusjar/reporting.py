@@ -41,7 +41,7 @@ JWT_RE = re.compile(
 ASSIGNMENT_RE = re.compile(
     r"""(?ix)
     (["']?
-    (?:access[_-]?token|refresh[_-]?token|api[_-]?key|
+    (?:access[_-]?token|refresh[_-]?token|token|api[_-]?key|
        client[_-]?secret|password|passwd|secret|authorization)
     ["']?\s*[:=]\s*)
     (["'])?[^,\s;"'}]+
@@ -281,6 +281,14 @@ def normalize_report(report: Any) -> dict[str, Any]:
 
     target = sanitize_data(raw.get("target", "[target not recorded]"))
 
+    
+    summary = {
+        "endpoints": len(scope),
+        "checks_performed": checks_performed,
+        "findings": len(findings),
+        "errors": len(errors),
+    }
+
     return {
         "tool": "OctopusJar",
         "version": __version__,
@@ -295,6 +303,7 @@ def normalize_report(report: Any) -> dict[str, Any]:
         "findings_by_severity": dict(severity_counts),
         "findings": findings,
         "errors": errors,
+        "summary": summary,
         "limitations": sanitize_data(_plain(raw.get("limitations") or [])),
         "reproduction": {
             "method": "Non-destructive HTTP checks only",
@@ -306,6 +315,7 @@ def normalize_report(report: Any) -> dict[str, Any]:
             ),
         },
     }
+
 
 
 def render_json(report: Any) -> str:

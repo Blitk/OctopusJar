@@ -17,7 +17,9 @@ from octopusjar.scanner import Scanner
 
 app = typer.Typer(
     name="octopusjar",
-    help="Scanner de segurança para APIs HTTP/REST autorizadas.",
+    help=(
+    "Scanner de segurança para APIs HTTP/REST autorizadas. "
+    "Only scan systems you are authorized to assess."),
     no_args_is_help=True,
     add_completion=False,
 )

@@ -24,12 +24,14 @@ class CheckError:
         return asdict(self)
 
 
+
 @dataclass(slots=True)
 class ScanReport:
     target: str
     started_at: str
     finished_at: str | None = None
     endpoints_scanned: list[str] = field(default_factory=list)
+    checks_performed: int = 0
     findings: list[Finding] = field(default_factory=list)
     errors: list[CheckError] = field(default_factory=list)
 
@@ -45,10 +47,12 @@ class ScanReport:
             "errors": [item.to_dict() for item in self.errors],
             "summary": {
                 "endpoints": len(self.endpoints_scanned),
+                "checks_performed": self.checks_performed,
                 "findings": len(self.findings),
                 "errors": len(self.errors),
             },
         }
+
 
 
 class Scanner:
@@ -90,12 +94,12 @@ class Scanner:
         seen: set[tuple[str, str, str]] = set()
 
         try:
-            checks_performed = 0
+            
             for endpoint in targets:
                 safe_url = safe_endpoint(endpoint)
 
                 for check in self.checks:
-                    checks_performed += 1
+                    report.checks_performed += 1
                     try:
                         results = check.run(self.client, endpoint)
 

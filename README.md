@@ -32,38 +32,93 @@ This initial foundation implements strict URL scope validation against an explic
 ## Examples
 
 ```python
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from octopusjar.checks import DEFAULT_CHECKS
+from octopusjar.http_client import HttpClient, HttpClientError
+from octopusjar.reporting import ReportWriteError, write_report
 from octopusjar.scanner import Scanner
-from octopusjar.scope import Scope
-from octopusjar.reporting import Reporting
 
-def executar_auditoria():
-    # Define o alvo e inicializa o escopo de segurança
-    alvo = "https://exemplo.com"
-    escopo = Scope(allowed_targets=[alvo])
 
-    # Inicializa o scanner passando o escopo configurado
-    scanner = Scanner(scope=escopo)
+def executar_todos_os_checks() -> int:
+    # Use apenas um alvo que você controla ou tem autorização para testar.
+    alvo = "SITE_ALVO"
+    destino = Path("relatorio_completo_checks.json")
 
-    print(f"Iniciando varredura de segurança em: {alvo}")
-    resultados = scanner.run()
+    print("Checks registrados:")
+    for check_class in DEFAULT_CHECKS:
+        print(f" - {check_class.__name__}")
 
-    # Processa e exporta os resultados para o formato de relatório
-    relatorio = Reporting(resultados)
-    relatorio.save_to_json("demo-report.json")
-    
-    print("Varredura finalizada. Relatório salvo com sucesso!")
+    with HttpClient(
+        target=alvo,
+        allowed_hosts=["SITEALVO:443"],
+        allow_private_targets=False,
+        connect_timeout=10.0,
+        read_timeout=10.0,
+        write_timeout=10.0,
+        pool_timeout=10.0,
+        max_requests=40,
+        requests_per_second=2.0,
+        max_redirects=3,
+        max_response_bytes=2_000_000,
+        verify_tls=True,
+    ) as cliente:
+        scanner = Scanner(cliente)
+
+        print(f"\nIniciando análise de: {alvo}\n")
+
+        try:
+            relatorio = scanner.scan(alvo)
+        except (ValueError, HttpClientError) as exc:
+            print(
+                f"Falha na execução: {type(exc).__name__}. "
+                "Detalhes omitidos.",
+                file=sys.stderr,
+            )
+            return 3
+
+    print("Checks concluídos.")
+    print(f"Endpoints analisados: {len(relatorio.endpoints_scanned)}")
+    print(f"Checks executados: {relatorio.checks_performed}")
+    print(f"Findings: {len(relatorio.findings)}")
+    print(f"Erros: {len(relatorio.errors)}")
+
+    try:
+        write_report(relatorio, destino, "json")
+    except (ReportWriteError, ValueError) as exc:
+        print(
+            f"Não foi possível gravar o relatório: {type(exc).__name__}",
+            file=sys.stderr,
+        )
+        return 3
+
+    print(f"\nRelatório salvo em: {destino.resolve()}")
+
+    if relatorio.errors:
+        return 3
+
+    if relatorio.findings:
+        return 1
+
+    return 0
+
 
 if __name__ == "__main__":
-    executar_auditoria()
+    raise SystemExit(executar_todos_os_checks())
+
 ```
 Or CLI:
 
 ```bash
 # Executa uma varredura básica em um alvo específico gerando um relatório em JSON
-octopusjar scan --target https://exemplo.com --output demo-report.json
+octopusjar scan https://exemplo.com --output demo-report.json
 
 # Execução alternativa chamando o pacote diretamente pelo Python
-python -m octopusjar.cli scan --target https://exemplo.com
+python -m octopusjar.cli scan https://exemplo.com
 ```
 
 ---

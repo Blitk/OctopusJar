@@ -1,54 +1,85 @@
-from octopusjar.http_client import HttpClient
-from octopusjar.scope import Scope
-from octopusjar.checks.cors import CorsCheck
-from octopusjar.checks.headers import SecurityHeadersCheck
-from octopusjar.checks.information_disclosure import InformationDisclosureCheck
-from octopusjar.checks.methods import HttpMethodsCheck
-from octopusjar.checks.redirects import OpenRedirectCheck
-from octopusjar.reporting import Reporting
 
-def executar_todos_os_checks():
-    alvo = "https://exemplo.com"
-    
-    # 1. Configurar o escopo e o cliente HTTP
-    escopo = Scope(allowed_targets=[alvo])
-    http_client = HttpClient(scope=escopo)
-    
-    if not escopo.is_allowed(alvo):
-        print(f"O alvo {alvo} não é permitido pelo escopo.")
-        return
+#!/usr/bin/env python3
+"""Executa os checks registrados do OctopusJar e gera um relatório JSON."""
 
-    print(f"Iniciando a execução de todos os checks de segurança para: {alvo}\n")
-    
-    # 2. Instanciar todas as verificações disponíveis no projeto
-    checks = [
-        CorsCheck(http_client=http_client),
-        SecurityHeadersCheck(http_client=http_client),
-        InformationDisclosureCheck(http_client=http_client),
-        HttpMethodsCheck(http_client=http_client),
-        OpenRedirectCheck(http_client=http_client)
-    ]
-    
-    resultados_totais = []
+from __future__ import annotations
 
-    # 3. Executar cada check individualmente sobre o alvo
-    for check in checks:
-        nome_check = check.__class__.__name__
-        print(f"Executando: {nome_check}...")
+import sys
+from pathlib import Path
+
+from octopusjar.checks import DEFAULT_CHECKS
+from octopusjar.http_client import HttpClient, HttpClientError
+from octopusjar.reporting import ReportWriteError, write_report
+from octopusjar.scanner import Scanner
+
+
+def executar_todos_os_checks() -> int:
+    # Use apenas um alvo que você controla ou tem autorização para testar.
+    alvo = "https://blitk.github.io"
+    destino = Path("relatorio_completo_checks.json")
+
+    # Confirma quais verificações estão registradas no projeto.
+    print("Checks registrados:")
+    for check_class in DEFAULT_CHECKS:
+        print(f" - {check_class.__name__}")
+
+    # O host explícito do alvo é permitido; redirecionamentos para outros
+    # hosts não são autorizados automaticamente.
+    with HttpClient(
+        target=alvo,
+        allowed_hosts=["blitk.github.io:443"],
+        allow_private_targets=False,
+        connect_timeout=10.0,
+        read_timeout=10.0,
+        write_timeout=10.0,
+        pool_timeout=10.0,
+        max_requests=40,
+        requests_per_second=2.0,
+        max_redirects=3,
+        max_response_bytes=2_000_000,
+        verify_tls=True,
+    ) as cliente:
+        scanner = Scanner(cliente)
+
+        print(f"\nIniciando análise de: {alvo}\n")
+
         try:
-            # Cada check analisa o alvo e retorna as vulnerabilidades ou avisos encontrados
-            resultados = check.run(alvo)
-            resultados_totais.extend(resultados)
-        except Exception as e:
-            print(f"Erro ao executar {nome_check}: {e}")
+            relatorio = scanner.scan(alvo)
+        except (ValueError, HttpClientError) as exc:
+            print(
+                f"Falha na execução: {type(exc).__name__}. "
+                "Detalhes omitidos.",
+                file=sys.stderr,
+            )
+            return 3
 
-    # 4. Consolidar e exportar os resultados utilizando o reporting
-    relatorio = Reporting(resultados_totais)
-    relatorio.save_to_json("relatorio_completo_checks.json")
-    
-    print("\nVarredura com todos os checks concluída com sucesso!")
-    print(f"Total de ocorrências/achados registados: {len(resultados_totais)}")
-    print("Relatório guardado em: relatorio_completo_checks.json")
+    print("Checks concluídos.")
+    print(f"Endpoints analisados: {len(relatorio.endpoints_scanned)}")
+    print(f"Checks executados: {relatorio.checks_performed}")
+    print(f"Findings: {len(relatorio.findings)}")
+    print(f"Erros: {len(relatorio.errors)}")
+
+    try:
+        write_report(relatorio, destino, "json")
+    except (ReportWriteError, ValueError) as exc:
+        print(
+            f"Não foi possível gravar o relatório: {type(exc).__name__}",
+            file=sys.stderr,
+        )
+        return 3
+
+    print(f"\nRelatório salvo em: {destino.resolve()}")
+
+    # Código 3 sinaliza que algum check não foi concluído corretamente.
+    if relatorio.errors:
+        return 3
+
+    # Código 1 indica que foram encontrados findings.
+    if relatorio.findings:
+        return 1
+
+    return 0
+
 
 if __name__ == "__main__":
-    executar_todos_os_checks()
+    raise SystemExit(executar_todos_os_checks())

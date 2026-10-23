@@ -1,0 +1,98 @@
+{
+  "tool": "OctopusJar",
+  "version": "0.1.0",
+  "generated_at": "2026-10-23T12:19:03.334032-03:00",
+  "started_at": "2026-10-23T15:19:00.803478+00:00",
+  "finished_at": "2026-10-23T15:19:03.330843+00:00",
+  "duration_seconds": 2.527,
+  "target": "https://blitk.github.io/",
+  "scope": [
+    "https://blitk.github.io/"
+  ],
+  "checks_performed": 5,
+  "findings_count": 5,
+  "findings_by_severity": {
+    "LOW": 4,
+    "INFO": 1,
+    "CRITICAL": 0,
+    "HIGH": 0,
+    "MEDIUM": 0,
+    "UNKNOWN": 0
+  },
+  "findings": [
+    {
+      "rule_id": "OJ-HEADERS-001",
+      "name": "Missing X-Content-Type-Options",
+      "description": "The response does not include X-Content-Type-Options.",
+      "severity": "low",
+      "evidence": "HTTP 200; X-Content-Type-Options absent",
+      "endpoint": "https://blitk.github.io/",
+      "recommendation": "Consider sending X-Content-Type-Options: nosniff, especially for browser-served resources.",
+      "reference": "https://owasp.org/www-project-secure-headers/",
+      "confidence": "medium",
+      "limitations": "Assessment is based on one response. Reverse proxies, other routes and application-specific controls may differ."
+    },
+    {
+      "rule_id": "OJ-HEADERS-001",
+      "name": "Missing Content-Security-Policy",
+      "description": "The response does not include Content-Security-Policy.",
+      "severity": "low",
+      "evidence": "HTTP 200; Content-Security-Policy absent",
+      "endpoint": "https://blitk.github.io/",
+      "recommendation": "Evaluate a CSP appropriate to the application's scripts, styles, frames and other browser resources.",
+      "reference": "https://owasp.org/www-project-secure-headers/",
+      "confidence": "medium",
+      "limitations": "Assessment is based on one response. Reverse proxies, other routes and application-specific controls may differ."
+    },
+    {
+      "rule_id": "OJ-HEADERS-001",
+      "name": "Missing X-Frame-Options / CSP frame-ancestors",
+      "description": "The response does not include X-Frame-Options / CSP frame-ancestors.",
+      "severity": "low",
+      "evidence": "HTTP 200; X-Frame-Options / CSP frame-ancestors absent",
+      "endpoint": "https://blitk.github.io/",
+      "recommendation": "If this page must not be embedded, configure frame-ancestors or X-Frame-Options.",
+      "reference": "https://owasp.org/www-project-secure-headers/",
+      "confidence": "medium",
+      "limitations": "Assessment is based on one response. Reverse proxies, other routes and application-specific controls may differ."
+    },
+    {
+      "rule_id": "OJ-CORS-001",
+      "name": "Wildcard CORS origin",
+      "description": "The endpoint permits browser cross-origin access from any origin for responses governed by this header.",
+      "severity": "low",
+      "evidence": "Access-Control-Allow-Origin: *",
+      "endpoint": "https://blitk.github.io/",
+      "recommendation": "Confirm the resource is intentionally public. Otherwise, return only explicitly trusted origins.",
+      "reference": "https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny",
+      "confidence": "medium",
+      "limitations": "Wildcard CORS does not grant authentication or prove sensitive data exposure; endpoint data sensitivity matters."
+    },
+    {
+      "rule_id": "OJ-DISCLOSURE-001",
+      "name": "Technology information in Server",
+      "description": "A response header reveals a server or framework identifier that may help fingerprint the deployment.",
+      "severity": "info",
+      "evidence": "Server: GitHub.com",
+      "endpoint": "https://blitk.github.io/",
+      "recommendation": "Remove or minimize unnecessary version details if compatible with operational and debugging requirements.",
+      "reference": "https://owasp.org/www-project-web-security-testing-guide/",
+      "confidence": "high",
+      "limitations": "Technology identification is not itself proof of a vulnerable version or exploitable weakness."
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "endpoints": 1,
+    "checks_performed": 5,
+    "findings": 5,
+    "errors": 0
+  },
+  "limitations": [],
+  "reproduction": {
+    "method": "Non-destructive HTTP checks only",
+    "request_body_recorded": false,
+    "response_bodies_included": false,
+    "redirects_and_request_limits": "Use the original scan configuration; this report does not store secrets or guarantee a byte-for-byte replay."
+  }
+}
